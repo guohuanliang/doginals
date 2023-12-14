@@ -13,6 +13,7 @@ dotenv.config()
 
 if (process.env.TESTNET == 'true') {
     dogecore.Networks.defaultNetwork = dogecore.Networks.testnet
+    console.log("dogecore.Networks.defaultNetwork=",dogecore.Networks.defaultNetwork);
 }
 
 if (process.env.FEE_PER_KB) {
@@ -72,13 +73,15 @@ function walletNew() {
         const address = privateKey.toAddress().toString()
         const json = { privkey, address, utxos: [] }
         fs.writeFileSync(WALLET_PATH, JSON.stringify(json, 0, 2))
-        console.log('address', address)
+        console.log('address=', address)
     } else {
         throw new Error('wallet already exists')
     }
 }
 
-
+/**
+ *  Get unspent outputs of address(获取地址的未使用输出)
+ */
 async function walletSync() {
     if (process.env.TESTNET == 'true') throw new Error('no testnet api')
 
@@ -100,7 +103,7 @@ async function walletSync() {
 
     let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
 
-    console.log('balance', balance)
+    console.log('balance=', balance)
 }
 
 
@@ -109,7 +112,7 @@ function walletBalance() {
 
     let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
 
-    console.log(wallet.address, balance)
+    console.log("wallet.address:{},balance={}",wallet.address, balance)
 }
 
 
@@ -137,7 +140,7 @@ async function walletSend() {
 
     await broadcast(tx, true)
 
-    console.log(tx.hash)
+    console.log("[walletSend]tx.hash=",tx.hash)
 }
 
 
@@ -159,7 +162,7 @@ async function walletSplit() {
 
     await broadcast(tx, true)
 
-    console.log(tx.hash)
+    console.log("[walletSplit]tx.hash=",tx.hash)
 }
 
 
@@ -397,6 +400,9 @@ function fund(wallet, tx) {
     }
 
     if (tx.inputAmount < tx.outputAmount + tx.getFee()) {
+        console.log("tx.inputAmount=",tx.inputAmount);
+        console.log("tx.outputAmount=",tx.outputAmount);
+        console.log("tx.getFee()=",tx.getFee());
         throw new Error('not enough funds')
     }
 }
