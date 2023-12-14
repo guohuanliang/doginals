@@ -10,7 +10,7 @@ const { PrivateKey, Address, Transaction, Script, Opcode } = dogecore
 const { Hash, Signature } = dogecore.crypto
 
 dotenv.config()
-
+//true代表使用测试网络
 if (process.env.TESTNET == 'true') {
     dogecore.Networks.defaultNetwork = dogecore.Networks.testnet
     console.log("dogecore.Networks.defaultNetwork=",dogecore.Networks.defaultNetwork);
@@ -24,7 +24,10 @@ if (process.env.FEE_PER_KB) {
 
 const WALLET_PATH = process.env.WALLET || '.wallet.json'
 
-
+/**
+ * 主程序入口
+ * @returns 
+ */
 async function main() {
     let cmd = process.argv[2]
 
@@ -45,7 +48,9 @@ async function main() {
     }
 }
 
-
+/**
+ * node指令对应钱包相关函数
+ */
 async function wallet() {
     let subcmd = process.argv[3]
 
@@ -85,17 +90,17 @@ function walletNew() {
  */
 async function walletSync() {
     if (process.env.TESTNET == 'true') throw new Error('no testnet api')
-
+    
     let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
 
     console.log('syncing utxos with dogechain.info api')
-    
+
     let response = await axios.get(`https://dogechain.info/api/v1/address/unspent/${wallet.address}`)
     wallet.utxos = response.data.unspent_outputs.map(output => {
         return {
             //tx_hash 事务id 交易id
             txid: output.tx_hash,
-            // 0
+            // 应该类似于下标之类的 从0开始
             vout: output.tx_output_n,
             // ？ 脚本
             script: output.script,
@@ -105,7 +110,7 @@ async function walletSync() {
     })
     //写入.wallet.json文件中
     fs.writeFileSync(WALLET_PATH, JSON.stringify(wallet, 0, 2))
-    //获取余额
+    //获取余额 对utxo中未使用的进行累加求和
     let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
     //输出余额
     console.log('balance=', balance)
@@ -153,7 +158,7 @@ async function walletSend() {
 }
 
 /**
- * 分割狗狗币
+ * 分割狗狗币 
  */
 async function walletSplit() {
     let splits = parseInt(process.argv[4])
@@ -170,7 +175,7 @@ async function walletSplit() {
     }
     tx.change(wallet.address)
     tx.sign(wallet.privkey)
-
+    // 广播(调用自己设置的节点地址)
     await broadcast(tx, true)
 
     console.log("[walletSplit]tx.hash=",tx.hash)
@@ -442,15 +447,22 @@ function updateWallet(wallet, tx) {
         })
 }
 
-
+/**
+ * 
+ * @param {*} tx 广播入参
+ * @param {*} retry 布尔类型
+ */
 async function broadcast(tx, retry) {
+    console.log("[broadcast]进行广播时入参=",tx.toString());
     const body = {
         jsonrpc: "1.0",
         id: 0,
         method: "sendrawtransaction",
         params: [tx.toString()]
     }
-
+    /**
+     * rpc auth 授权信息
+     */
     const options = {
         auth: {
             username: process.env.NODE_RPC_USER,
@@ -473,11 +485,11 @@ async function broadcast(tx, retry) {
             }
         }
     }
-
+    //读取本地.wallet.json文件内容
     let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
-
+    //修改钱包余额信息
     updateWallet(wallet, tx)
-
+    //最新余额写入.wallet.json
     fs.writeFileSync(WALLET_PATH, JSON.stringify(wallet, 0, 2))
 }
 
