@@ -7,6 +7,21 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "铭刻",
+            "program": "${workspaceFolder}/doginals.js",
+            "runtimeExecutable": "node",
+            "args": ["mint","D9pMUvGNUwywEQSyXDHCdG7R76mtXm3UCR","text/plain;charset=utf8","576f6f6621"],
+            "cwd": "${workspaceFolder}",
+            "protocol": "inspector",
+            // "env": {
+            //     "NODE_ENV": ".env"
+            // },
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        }
+        {
+            "type": "node",
+            "request": "launch",
             "name": "查询钱包余额",
             "program": "${workspaceFolder}/doginals.js",
             "runtimeExecutable": "node",

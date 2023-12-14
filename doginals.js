@@ -235,7 +235,7 @@ async function broadcastAll(txs, retry) {
         }
     }
 
-    fs.deleteFileSync('pending-txs.json')
+    // fs.deleteFileSync('pending-txs.json')
 
     console.log('inscription txid:', txs[1].hash)
 }
@@ -266,7 +266,14 @@ function opcodeToChunk(op) {
 const MAX_CHUNK_LEN = 240
 const MAX_PAYLOAD_LEN = 1500
 
-
+/**
+ * 
+ * @param {*} wallet wallet.json文件内容
+ * @param {*} address 钱包地址
+ * @param {*} contentType 
+ * @param {*} data 铭刻的内容
+ * @returns 
+ */
 function inscribe(wallet, address, contentType, data) {
     let txs = []
 
@@ -561,7 +568,7 @@ function server() {
         console.log(`Listening on port ${port}`)
         console.log()
         console.log(`Example:`)
-        console.log(`http://localhost:${port}/tx/15f3b73df7e5c072becb1d84191843ba080734805addfccb650929719080f62e`)
+        console.log(`http://localhost:${port}/tx/4f42174b9c52097a1770bb437ac2d6f46293277ed0e818abbc0cbd3f783f63af`)
     })
 }
 
