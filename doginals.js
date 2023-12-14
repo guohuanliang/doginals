@@ -34,7 +34,6 @@ async function main() {
         await broadcastAll(txs.map(tx => new Transaction(tx)), false)
         return 
     }
-
     if (cmd == 'mint') {
         await mint()
     } else if (cmd == 'wallet') {
@@ -65,7 +64,9 @@ async function wallet() {
     }
 }
 
-
+/**
+ * 创建钱包
+ */
 function walletNew() {
     if (!fs.existsSync(WALLET_PATH)) {
         const privateKey = new PrivateKey()
@@ -80,7 +81,7 @@ function walletNew() {
 }
 
 /**
- *  Get unspent outputs of address(获取地址的未使用输出)
+ *  Get unspent outputs of address(同步钱包余额)
  */
 async function walletSync() {
     if (process.env.TESTNET == 'true') throw new Error('no testnet api')
@@ -88,34 +89,42 @@ async function walletSync() {
     let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
 
     console.log('syncing utxos with dogechain.info api')
-
+    
     let response = await axios.get(`https://dogechain.info/api/v1/address/unspent/${wallet.address}`)
     wallet.utxos = response.data.unspent_outputs.map(output => {
         return {
+            //tx_hash 事务id 交易id
             txid: output.tx_hash,
+            // 0
             vout: output.tx_output_n,
+            // ？ 脚本
             script: output.script,
+            //钱包余额
             satoshis: output.value
         }
     })
-
+    //写入.wallet.json文件中
     fs.writeFileSync(WALLET_PATH, JSON.stringify(wallet, 0, 2))
-
+    //获取余额
     let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
-
+    //输出余额
     console.log('balance=', balance)
 }
 
-
+/**
+ * 获取钱包地址、余额
+ */
 function walletBalance() {
     let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
 
     let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
 
-    console.log("wallet.address:{},balance={}",wallet.address, balance)
+    console.log("wallet.address=",wallet.address,",balance=", balance)
 }
 
-
+/**
+ * 钱包转账
+ */
 async function walletSend() {
     const argAddress = process.argv[4]
     const argAmount = process.argv[5]
@@ -143,7 +152,9 @@ async function walletSend() {
     console.log("[walletSend]tx.hash=",tx.hash)
 }
 
-
+/**
+ * 分割狗狗币
+ */
 async function walletSplit() {
     let splits = parseInt(process.argv[4])
 
