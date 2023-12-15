@@ -526,7 +526,7 @@ async function extract(txid) {
 
     let contentType = chunks.shift().buf.toString('utf8')
 
-
+    
     let data = Buffer.alloc(0)
     let remaining = pieces
 
@@ -568,7 +568,7 @@ function server() {
         console.log(`Listening on port ${port}`)
         console.log()
         console.log(`Example:`)
-        console.log(`http://localhost:${port}/tx/4f42174b9c52097a1770bb437ac2d6f46293277ed0e818abbc0cbd3f783f63af`)
+        console.log(`http://localhost:${port}/tx/4a6cb983a65361729cfffc9d712f7fd7309555237b2ddc584a7f8f231759ccd4`)
     })
 }
 

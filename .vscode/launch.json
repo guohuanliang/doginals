@@ -18,7 +18,7 @@
             // },
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
-        }
+        },
         {
             "type": "node",
             "request": "launch",
@@ -26,6 +26,21 @@
             "program": "${workspaceFolder}/doginals.js",
             "runtimeExecutable": "node",
             "args": ["wallet","sync"],
+            "cwd": "${workspaceFolder}",
+            "protocol": "inspector",
+            // "env": {
+            //     "NODE_ENV": ".env"
+            // },
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "查看铭文内容",
+            "program": "${workspaceFolder}/doginals.js",
+            "runtimeExecutable": "node",
+            "args": ["server"],
             "cwd": "${workspaceFolder}",
             "protocol": "inspector",
             // "env": {
