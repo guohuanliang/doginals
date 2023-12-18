@@ -10,7 +10,7 @@
             "name": "铭刻",
             "program": "${workspaceFolder}/doginals.js",
             "runtimeExecutable": "node",
-            "args": ["mint","D9pMUvGNUwywEQSyXDHCdG7R76mtXm3UCR","text/plain;charset=utf8","576f6f6621"],
+            "args": ["mint","DLLFhpYxS2WbVdstzyuq6TPF1WMcLNFPAh","text/plain;charset=utf8","576f6f6621"],
             "cwd": "${workspaceFolder}",
             "protocol": "inspector",
             // "env": {

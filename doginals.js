@@ -224,13 +224,13 @@ async function broadcastAll(txs, retry) {
         console.log(`broadcasting tx ${i + 1} of ${txs.length}`)
 
         try {
-            throw new Error('hello')
+            // throw new Error('hello')
             await broadcast(txs[i], retry)
         } catch (e) {
-            console.log('broadcast failed', e)
-            console.log('saving pending txs to pending-txs.json')
-            console.log('to reattempt broadcast, re-run the command')
-            fs.writeFileSync('pending-txs.json', JSON.stringify(txs.slice(i).map(tx => tx.toString())))
+            console.log('broadcast failed', e.error.message)
+            // console.log('saving pending txs to pending-txs.json')
+            // console.log('to reattempt broadcast, re-run the command')
+            // fs.writeFileSync('pending-txs.json', JSON.stringify(txs.slice(i).map(tx => tx.toString())))
             process.exit(1)
         }
     }
@@ -460,7 +460,6 @@ function updateWallet(wallet, tx) {
  * @param {*} retry 布尔类型
  */
 async function broadcast(tx, retry) {
-    console.log("[broadcast]进行广播时入参=",tx.toString());
     const body = {
         jsonrpc: "1.0",
         id: 0,
