@@ -6,10 +6,15 @@ const fs = require('fs')
 const dotenv = require('dotenv')
 const mime = require('mime-types')
 const express = require('express')
+const bitcoin_rpc = require('node-bitcoin-rpc');
+const util = require('util');
+const promisifiedCall = util.promisify(bitcoin_rpc.call);
 const { PrivateKey, Address, Transaction, Script, Opcode } = dogecore
 const { Hash, Signature } = dogecore.crypto
-
+const BigNumber = require('bignumber.js');
 dotenv.config()
+bitcoin_rpc.init('127.0.0.1', '22555', process.env.NODE_RPC_USER, process.env.NODE_RPC_PASS)
+
 //true代表使用测试网络
 if (process.env.TESTNET == 'true') {
     dogecore.Networks.defaultNetwork = dogecore.Networks.testnet
@@ -185,8 +190,13 @@ async function walletSplit() {
 const MAX_SCRIPT_ELEMENT_SIZE = 520
 
 async function mint() {
+    let satoshis = await callEstimateSmartFee();
+    console.log(">>>>:",satoshis)
+    //地址
     const argAddress = process.argv[3]
+    //ContentType = "text/plain;charset=utf8"
     const argContentTypeOrFilename = process.argv[4]
+    //铭刻内容，必须是16进制字符串
     const argHexData = process.argv[5]
 
 
@@ -214,7 +224,7 @@ async function mint() {
 
     let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
 
-    let txs = inscribe(wallet, address, contentType, data)
+    let txs = inscribe(wallet, address, contentType, data, convertToInteger(satoshis))
 
     await broadcastAll(txs, false)
 }
@@ -227,7 +237,7 @@ async function broadcastAll(txs, retry) {
             // throw new Error('hello')
             await broadcast(txs[i], retry)
         } catch (e) {
-            console.log('broadcast failed', e.error.message)
+            console.log('broadcast failed', e)
             // console.log('saving pending txs to pending-txs.json')
             // console.log('to reattempt broadcast, re-run the command')
             // fs.writeFileSync('pending-txs.json', JSON.stringify(txs.slice(i).map(tx => tx.toString())))
@@ -274,16 +284,17 @@ const MAX_PAYLOAD_LEN = 1500
  * @param {*} data 铭刻的内容
  * @returns 
  */
-function inscribe(wallet, address, contentType, data) {
+function inscribe(wallet, address, contentType, data,satoshis) {
     let txs = []
 
 
     let privateKey = new PrivateKey(wallet.privkey)
     let publicKey = privateKey.toPublicKey()
 
-
+    //parts存放铭刻内容
     let parts = []
     while (data.length) {
+        //截取铭刻内容的Buffer，组成新的数组
         let part = data.slice(0, Math.min(MAX_CHUNK_LEN, data.length))
         data = data.slice(part.length)
         parts.push(part)
@@ -306,6 +317,7 @@ function inscribe(wallet, address, contentType, data) {
     let lastPartial
 
     while (inscription.chunks.length) {
+        //存放铭刻内容
         let partial = new Script()
 
         if (txs.length == 0) {
@@ -341,7 +353,8 @@ function inscribe(wallet, address, contentType, data) {
         p2sh.chunks.push(bufferToChunk(lockhash))
         p2sh.chunks.push(opcodeToChunk(Opcode.OP_EQUAL))
 
-
+       
+        
         let p2shOutput = new Transaction.Output({
             script: p2sh,
             satoshis: 100000
@@ -387,7 +400,7 @@ function inscribe(wallet, address, contentType, data) {
 
     let tx = new Transaction()
     tx.addInput(p2shInput)
-    tx.to(address, 100000)
+    tx.to(address, satoshis)
     fund(wallet, tx)
 
     let signature = Transaction.sighash.sign(tx, privateKey, Signature.SIGHASH_ALL, 0, lastLock)
@@ -508,6 +521,22 @@ function chunkToNumber(chunk) {
     return undefined
 }
 
+async function callEstimateSmartFee(){
+    return new Promise((resolve,reject) => {
+
+        bitcoin_rpc.call('estimatesmartfee', [6], function (err, res) {
+
+        if (err !== null) {
+          console.log('I have an error :( ' + err + ' ' + res.error)
+          reject(res.error)
+        } else {
+          console.log('Yay! I need to do whatevere now with ' + res.result.feerate)
+          resolve(res.result.feerate)
+        }
+      })
+        
+    });
+}
 
 async function extract(txid) {
     let resp = await axios.get(`https://dogechain.info/api/v1/transaction/${txid}`)
@@ -571,6 +600,12 @@ function server() {
     })
 }
 
+function convertToInteger(value) {
+    // 使用 BigNumber 将浮点数转换为整数
+    const integerValue = new BigNumber(value).times(10 ** 8).integerValue();
+  
+    return integerValue.toNumber();
+  }
 
 main().catch(e => {
     let reason = e.response && e.response.data && e.response.data.error && e.response.data.error.message
